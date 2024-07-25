@@ -3,6 +3,7 @@ package com.example.threadkotlinproject.coroutinesample.coroutine
 import android.content.Context
 import android.os.Environment
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -13,11 +14,9 @@ import kotlin.coroutines.CoroutineContext
 
 class DownloadManager(val context: Context) {
 
-    private fun downloadToExternalStorage(
-        url: String,
-        onSuccess: (String) -> Unit,
-        onError: (IOException) -> Unit
-    ) {
+    suspend fun downloadToExternalStorage(
+        url: String
+    ) = withContext(Dispatchers.IO) {
         var connection: HttpURLConnection? = null
         var inputStream: InputStream? =
             null //vì inputstr có thể null => sd "?" để có thể sd dc luôn
@@ -52,12 +51,18 @@ class DownloadManager(val context: Context) {
                     outputStream.close()
                 }
                 inputStream.close()
-                connection.disconnect()
-                onSuccess(if (file != null) file.absolutePath else "")
+                connection.disconnect()/*   withContext(Dispatchers.Main) {
+                       onSuccess(if (file != null) file.absolutePath else "")
+                   }*/
+                return@withContext file?.absolutePath
+            } else {
+                return@withContext ""
             }
         } catch (e: IOException) {
-            e.printStackTrace()
-            onError(e)
+            e.printStackTrace()/*withContext(Dispatchers.Main) {
+                onError(e)
+            }*/
+            return@withContext null
         } finally {
             inputStream?.close()
             outputStream?.close()
